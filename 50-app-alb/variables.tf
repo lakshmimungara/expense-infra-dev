@@ -14,8 +14,13 @@ variable "common_tags" {
   }
 }
 
-variable "bastion_tags" {
+variable "app_alb_tags" {
   default = {
-    Component = "bastion" # this can be optional 
+    Component = "app-alb"
   }
+}
+
+
+variable "zone_name"{
+  default = "daws81s.fun"
 }

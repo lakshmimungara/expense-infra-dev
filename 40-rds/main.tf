@@ -1,7 +1,7 @@
 module "db" {
   source = "terraform-aws-modules/rds/aws"
 
-  identifier = local.resource_name 
+  identifier = local.resource_name
 
   engine            = "mysql"
   engine_version    = "8.0"
@@ -14,7 +14,7 @@ module "db" {
   port     = "3306"
 
   vpc_security_group_ids = [local.mysql_sg_id]
-  skip_final_snapshot = true 
+  skip_final_snapshot    = true
 
 
   tags = merge(
@@ -57,5 +57,21 @@ module "db" {
         },
       ]
     },
+  ]
+}
+
+module "records"{
+  source = "terraform-aws-modules/route53/aws//modules/records"
+
+  zone_name = var.zone_name
+
+  records = [
+    {
+      name = "mysql-${var.environment}"  # mysql-dev.daws81s.fun
+      type = "CNAME"
+      ttl  = 1 
+      records = [module.db.db_instance_address]
+      allow_overwrite = true 
+    }
   ]
 }

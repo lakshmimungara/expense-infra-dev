@@ -8,7 +8,7 @@ terraform {
 
   backend "s3" {
     bucket         = "81s-remote-state-bucket-dev"
-    key            = "expense-sg-dev" # a repo sould have unique s3 key 
+    key            = "expense-app-alb-dev" # a repo sould have unique s3 key 
     region         = "us-east-1"
     dynamodb_table = "81s-locking-dev"
 
