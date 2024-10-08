@@ -98,7 +98,7 @@ resource "null_resource" "backend" {
 # Step-7: Launch Template
 resource "aws_launch_template" "backend" {
 
-  name = local.resource_name
+  name = local.resource_name  # expense-dev-backend
   image_id = aws_ami_from_instance.backend.id
   instance_initiated_shutdown_behavior = "terminate"
   instance_type = "t3.micro"
@@ -110,14 +110,14 @@ resource "aws_launch_template" "backend" {
     resource_type = "instance"
 
     tags = {
-      Name = local.resource_name
+      Name = local.resource_name  # expense-dev-backend
     }
   }
 }
 
 # Step-8: Creation of autoscaling group 
 resource "aws_autoscaling_group" "backend" {
-  name                      = local.resource_name
+  name                      = local.resource_name   # expense-dev-backend
   max_size                  = 10
   min_size                  = 2
   health_check_grace_period = 60
@@ -125,14 +125,14 @@ resource "aws_autoscaling_group" "backend" {
   desired_capacity          = 2 # starting of the auto scaling group
   #force_delete              = true
   launch_template {
-    id      = aws_launch_template.backend.id
+    id      = aws_launch_template.backend.id    # Here, we are taking launch template id 
     version = "$Latest"
   }
   vpc_zone_identifier       = [local.private_subnet_id]
 
   tag {
     key                 = "Name"
-    value               = local.resource_name
+    value               = local.resource_name   # expense-dev-backend
     propagate_at_launch = true
   }
 
@@ -148,10 +148,11 @@ resource "aws_autoscaling_group" "backend" {
   }
 }
 
+# adding policy to the autoscaling group 
 resource "aws_autoscaling_policy" "example" {
-  name = local.resource_name
+  name = local.resource_name   # expense-dev-backend
   policy_type            = "TargetTrackingScaling"
-  autoscaling_group_name  = aws_autoscaling_group.backend.name
+  autoscaling_group_name  = aws_autoscaling_group.backend.name   # expense-dev-backend
   target_tracking_configuration {
     predefined_metric_specification {
       predefined_metric_type = "ASGAverageCPUUtilization"
