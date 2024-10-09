@@ -148,11 +148,20 @@ resource "aws_autoscaling_group" "backend" {
   health_check_type         = "ELB"
   desired_capacity          = 2 # starting of the auto scaling group
   #force_delete              = true
+  target_group_arns          = [aws_lb_target_group.backend.arn]
   launch_template {
     id      = aws_launch_template.backend.id    # Here, we are taking launch template id 
     version = "$Latest"
   }
   vpc_zone_identifier       = [local.private_subnet_id]
+
+  instance_refresh {
+    strategy = "Rolling"
+    preferences {
+      min_healthy_percentage = 50
+    }
+    triggers = ["launch_template"]
+  }
 
   tag {
     key                 = "Name"
@@ -183,5 +192,23 @@ resource "aws_autoscaling_policy" "example" {
     }
 
     target_value = 70.0   # When CPU utilization exceeds 70%, new instances are launched.
+  }
+}
+
+# Step-9: Listener rule 
+resource "aws_lb_listener_rule" "backend" {
+  listener_arn = local.app_alb_listener_arn
+  priority     = 100 # low priority will be evaluated first
+
+  action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.backend.arn
+  }
+
+  condition {
+    host_header {
+      values = ["${var.backend_tags.Component}.app-${var.environment}.${var.zone_name}"]
+      # backend.app-dev.daws81s.fun 
+    }
   }
 }

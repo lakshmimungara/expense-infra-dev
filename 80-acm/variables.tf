@@ -14,12 +14,10 @@ variable "common_tags" {
   }
 }
 
-variable "backend_tags" {
-  default = {
-    Component = "backend"
-  }
-}
-
 variable "zone_name"{
   default = "daws81s.fun"
+}
+
+variable "zone_id"{
+    default = "Z0810527R2ZKWDUDH1VM"
 }
