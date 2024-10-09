@@ -1,9 +1,21 @@
+/*
+Step 1: Creates a backend EC2 instance using a pre-configured Terraform module.
+Step 2: Configures the backend instance using Ansible and Shell scripting with the null_resource and provisioners.
+Step 3: Stops the backend instance.
+Step 4: Takes an AMI image of the stopped backend instance.
+Step 5: Terminates/delete the backend instance.
+Step 6: Creates a Target Group for load balancing backend instances.
+Step 7: Creates a Launch Template for launching backend instances with the AMI.
+Step 8: Creates an Auto Scaling Group to manage and scale the backend instances.
+*/
+
+
 # Step1:  backend instance creation 
 module "backend" {
   source                 = "terraform-aws-modules/ec2-instance/aws"
   ami                    = data.aws_ami.joindevops.id # we have declared this in data.tf file 
   name                   = local.resource_name        # expense-dev-backend
-  instance_type          = "t3.micro"
+  instance_type          = "t3.micro"   # Instance Type: Defines the instance as t3.micro.
   vpc_security_group_ids = [local.backend_sg_id]
   subnet_id              = local.private_subnet_id
   tags = merge(
@@ -28,6 +40,8 @@ resource "null_resource" "backend" {
   # So we just choose the first in this case 
   connection {
     host = module.backend.private_ip
+    /*Uses SSH to connect to the backend instance. 
+    The connection uses the private IP address with a user and password.*/
     # vpn is mandatory and without vpn we cannot connect to backend instance
     type     = "ssh"
     user     = "ec2-user"
@@ -36,10 +50,12 @@ resource "null_resource" "backend" {
 
   provisioner "file" {
     source      = "${var.backend_tags.Component}.sh"  # backend.sh
-    destination = "/tmp/backend.sh"
+    destination = "/tmp/backend.sh"  # Uploads a shell script (backend.sh) to the instance at /tmp/backend.sh.
   }
 
   provisioner "remote-exec" {
+    /*Executes the shell script to configure the backend instance. 
+    It passes the component and environment variables to the script.*/
     # Bootstrap script called with private_ip of each node in the cluster 
     inline = [
       "chmod +x /tmp/backend.sh",
@@ -51,15 +67,18 @@ resource "null_resource" "backend" {
   # Step-3: Stopping the backend instance 
     resource "aws_ec2_instance_state" "backend" {
     instance_id = module.backend.id
-    state       = "stopped"
-    depends_on = [null_resource.backend]
+    state       = "stopped"  # The state of the instance is set to "stopped" after the configuration.
+    depends_on = [null_resource.backend] 
+    # Ensures the instance is only stopped after the configuration completes.
   }
 
   # Step-4: Taking the AMI image
   resource "aws_ami_from_instance" "backend" {
-    name               = local.resource_name
+    # This creates an AMI from the stopped backend instance so that it can be used later to launch new instances.
+    name               = local.resource_name  # expense-dev-backend
     source_instance_id = module.backend.id
-    depends_on = [aws_ec2_instance_state.backend]
+    depends_on = [aws_ec2_instance_state.backend]  
+    # Ensures that the AMI is created only after the instance is stopped.
   }
 
   # Step-5: deleting the backend instance
@@ -70,10 +89,12 @@ resource "null_resource" "backend" {
     }
 
     provisioner "local-exec" {
+      # Uses a local-exec provisioner to run an AWS CLI command to terminate the EC2 instance.
       command = "aws ec2 terminate-instances --instance-ids ${module.backend.id}"
     }
 
-    depends_on = [aws_ami_from_instance.backend]
+    depends_on = [aws_ami_from_instance.backend]  
+    #Ensures the instance is deleted only after the AMI creation.
   }
 
   # Step-6: Creating target group 
@@ -91,16 +112,18 @@ resource "null_resource" "backend" {
     path = "/health"      # path 
     port = 8080           
     protocol = "HTTP"
-    timeout = 4    # in default 30 seconds 
+    timeout = 4    # by default 30 seconds 
   }
 }
 
 # Step-7: Launch Template
 resource "aws_launch_template" "backend" {
-
+  /*Specifies how EC2 instances should be launched 
+  using the created AMI and instance configurations (instance type, security groups, etc.).*/
   name = local.resource_name  # expense-dev-backend
   image_id = aws_ami_from_instance.backend.id
-  instance_initiated_shutdown_behavior = "terminate"
+  instance_initiated_shutdown_behavior = "terminate"  
+  # Ensures the instance is terminated on shutdown
   instance_type = "t3.micro"
   
   update_default_version = true   # it updates the version everytime 
@@ -118,6 +141,7 @@ resource "aws_launch_template" "backend" {
 # Step-8: Creation of autoscaling group 
 resource "aws_autoscaling_group" "backend" {
   name                      = local.resource_name   # expense-dev-backend
+  #  Automatically scales instances based on demand (min 2 instances, max 10).
   max_size                  = 10
   min_size                  = 2
   health_check_grace_period = 60
@@ -158,6 +182,6 @@ resource "aws_autoscaling_policy" "example" {
       predefined_metric_type = "ASGAverageCPUUtilization"
     }
 
-    target_value = 70.0
+    target_value = 70.0   # When CPU utilization exceeds 70%, new instances are launched.
   }
 }
