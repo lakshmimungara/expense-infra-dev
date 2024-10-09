@@ -2,7 +2,7 @@
 # creating application load balancer(ALB)
 module "web_alb" {
   source = "terraform-aws-modules/alb/aws"
-  internal = false
+  internal = false   # internal = false means that this is an external load balancer, publicly accessible over the internet.
   name    = "${local.resource_name}-web-alb"   # expense-dev-web-alb
   vpc_id  = local.vpc_id
   subnets = local.public_subnet_ids
@@ -17,6 +17,10 @@ module "web_alb" {
 
 
 # target group  - creating listeners/rules
+/*
+The ALB is configured with two listeners, one for HTTP (port 80) 
+and another for HTTPS (port 443):
+*/
 resource "aws_lb_listener" "http" {
   load_balancer_arn = module.web_alb.arn    # arn - amazon resourse name - which is unique 
   port              = "80"
@@ -51,7 +55,7 @@ resource "aws_lb_listener" "https" {
 }
 
 
-# we are going to add records 
+# we are going to add records in Route53
 module "records" {
   source  = "terraform-aws-modules/route53/aws//modules/records"
 
@@ -62,9 +66,9 @@ module "records" {
       type    = "A"
       alias   = {
         name    = module.web_alb.dns_name
-        zone_id = module.web_alb.zone_id # This belongs to ALB internal hosted zone, not ours
+        zone_id = module.web_alb.zone_id # Refers to the internal hosted zone for the ALB (module.web_alb.zone_id), not the public Route 53 zone
       }
-      allow_overwrite = true
+      allow_overwrite = true   # It allows updating the DNS record if it already exists.
     }
   ]
 }
