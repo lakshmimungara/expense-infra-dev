@@ -1,8 +1,8 @@
 
 resource "aws_cloudfront_distribution" "expense" {
   origin {
-    domain_name              = "${var.project_name}-${var.environment}.${var.zone_name}"    # expense-dev.daws81s.fun
-    origin_id                = "${var.project_name}-${var.environment}.${var.zone_name}"    # expense-dev.daws81s.fun
+    domain_name              = "${var.project_name}-${var.environment}.${var.zone_name}"   # expense-dev.daws81s.fun
+    origin_id                = "${var.project_name}-${var.environment}.${var.zone_name}"   # expense-dev.daws81s.fun
 
     custom_origin_config {
         http_port = 80  
@@ -63,7 +63,7 @@ resource "aws_cloudfront_distribution" "expense" {
   restrictions {
     geo_restriction {
       restriction_type = "whitelist"
-      locations        = ["IN", "CA", "GB", "DE"]
+      locations        = ["CA", "GB", "DE","US"]
     }
   }
 
