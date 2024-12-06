@@ -1,4 +1,4 @@
-
+# CloudFront distribution creation 
 resource "aws_cloudfront_distribution" "expense" {
   origin {
     domain_name              = "${var.project_name}-${var.environment}.${var.zone_name}"   # expense-dev.daws81s.fun
@@ -14,13 +14,13 @@ resource "aws_cloudfront_distribution" "expense" {
 
   enabled             = true
 
-  aliases = ["${var.project_name}-cdn.${var.zone_name}"]
+  aliases = ["${var.project_name}-cdn.${var.zone_name}"]    # expense-cdn.daws81s.fun
 
   # dynamic content, evaluated at last no cache
   default_cache_behavior {
     allowed_methods  = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
     cached_methods   = ["GET", "HEAD"]
-    target_origin_id = "${var.project_name}-${var.environment}.${var.zone_name}"
+    target_origin_id = "${var.project_name}-${var.environment}.${var.zone_name}"  # expense-dev.daws81s.fun
 
     viewer_protocol_policy = "redirect-to-https"
     min_ttl                = 0
@@ -34,7 +34,7 @@ resource "aws_cloudfront_distribution" "expense" {
     path_pattern     = "/images/*"
     allowed_methods  = ["GET", "HEAD", "OPTIONS"]
     cached_methods   = ["GET", "HEAD", "OPTIONS"]
-    target_origin_id = "${var.project_name}-${var.environment}.${var.zone_name}"
+    target_origin_id = "${var.project_name}-${var.environment}.${var.zone_name}"   # expense-dev.daws81s.fun
 
     min_ttl                = 0
     default_ttl            = 86400
@@ -49,7 +49,7 @@ resource "aws_cloudfront_distribution" "expense" {
     path_pattern     = "/static/*"
     allowed_methods  = ["GET", "HEAD", "OPTIONS"]
     cached_methods   = ["GET", "HEAD", "OPTIONS"]
-    target_origin_id = "${var.project_name}-${var.environment}.${var.zone_name}"
+    target_origin_id = "${var.project_name}-${var.environment}.${var.zone_name}"   # expense-dev.daws81s.fun
 
     min_ttl                = 0
     default_ttl            = 86400
@@ -89,7 +89,7 @@ module "records" {
   zone_name = var.zone_name #daws81s.fun
   records = [
     {
-      name    = "expense-cdn" # *.app-dev
+      name    = "expense-cdn" # expense-cdn.daws81s.fun
       type    = "A"
       alias   = {
         name    = aws_cloudfront_distribution.expense.domain_name

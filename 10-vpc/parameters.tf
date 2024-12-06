@@ -24,7 +24,6 @@ resource "aws_ssm_parameter" "database_subnet_ids" {
   # joins the two subnet ids eg., ["subnet-1","subnet-2"] --> subnet-1,subnet-2
   # subnet-0579eb5e4ec20d64e,subnet-0c81c7c70866f34cd
 }
-
 resource "aws_ssm_parameter" "database_subnet_group_name" {
   name  = "/${var.project_name}/${var.environment}/database_subnet_group_name"
   type  = "String"
